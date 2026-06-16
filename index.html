@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Success Steps Email Builder</title>
+<style>
+  :root{ --red:#c71746; --orange:#f7941d; --cream:#fff7ec; --bg:#f7f2ef; --ink:#302c2f; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:Arial,Helvetica,sans-serif; }
+  .wrap{ max-width:1200px; margin:0 auto; padding:24px 18px 60px; }
+  h1{ margin:0 0 4px; font-size:26px; color:var(--red); }
+  .sub{ margin:0 0 20px; font-size:15px; color:#6f6469; line-height:1.5; }
+  .how{ background:#fff; border:1px solid #eadfda; border-radius:10px; padding:16px 20px; margin:0 0 22px; font-size:14px; line-height:1.6; }
+  .how b{ color:var(--red); }
+  .grid{ display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+  .panel{ flex:1 1 380px; min-width:320px; }
+  .preview-col{ flex:1 1 520px; min-width:340px; }
+  .card{ background:#fff; border:1px solid #eadfda; border-radius:10px; padding:18px 20px; margin:0 0 16px; }
+  .card h2{ margin:0 0 12px; font-size:17px; color:var(--red); }
+  label.fld{ display:block; font-size:13px; font-weight:700; color:#6f6469; margin:0 0 6px; }
+  input[type=text]{ width:100%; padding:10px 12px; font-size:15px; border:1px solid #d8ccc6; border-radius:7px; }
+  .step-row{ display:flex; align-items:center; gap:12px; padding:11px 12px; border:1px solid #eee0dc; border-radius:8px; margin:0 0 9px; }
+  .step-row .n{ width:26px; height:26px; flex:0 0 26px; border-radius:14px; background:#e9ddd7; color:#7e7068; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .step-row .t{ flex:1; font-size:14px; line-height:1.3; }
+  .toggle{ border:0; cursor:pointer; font-size:13px; font-weight:800; padding:7px 12px; border-radius:999px; min-width:104px; text-align:center; }
+  .toggle.todo{ background:#fdeef2; color:var(--red); }
+  .toggle.done{ background:#e7f0db; color:#4f7a1f; }
+  .step-row.is-done .n{ background:#cfc7c2; color:#fff; }
+  .step-row.is-done .t{ color:#9a8f88; text-decoration:line-through; }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:4px; }
+  .btn{ border:0; cursor:pointer; font-size:15px; font-weight:800; padding:13px 20px; border-radius:8px; }
+  .btn-primary{ background:var(--red); color:#fff; }
+  .btn-ghost{ background:#fff; border:1px solid #d8ccc6; color:var(--ink); }
+  .msg{ font-size:14px; font-weight:700; color:#4f7a1f; min-height:18px; }
+  .muted{ font-size:12.5px; color:#8a7f78; line-height:1.5; margin:10px 0 0; }
+  iframe{ width:100%; height:1100px; border:1px solid #eadfda; border-radius:10px; background:#fff; }
+  .preview-col h2{ font-size:17px; color:var(--red); margin:0 0 10px; }
+  textarea#raw{ width:100%; height:160px; margin-top:10px; font-family:monospace; font-size:12px; display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Success Steps Email Builder</h1>
+  <p class="sub">Personalise the email for one person, then paste it straight into Gmail. Completed steps are shown ticked-off and greyed out, so each person sees clearly what they still need to do.</p>
+
+  <div class="how">
+    <b>How to use:</b> &nbsp;1. (Optional) type the person's first name. &nbsp;2. Mark any steps they've already done. &nbsp;3. Click <b>Copy email</b>. &nbsp;4. In Gmail, open a new message and paste (Cmd/Ctrl+V) — the styling comes across.
+  </div>
+
+  <div class="grid">
+    <div class="panel">
+      <div class="card">
+        <h2>Personalise</h2>
+        <label class="fld" for="name">Recipient's first name (optional)</label>
+        <input type="text" id="name" placeholder="e.g. Ana" autocomplete="off">
+      </div>
+
+      <div class="card">
+        <h2>Mark completed steps</h2>
+        <div id="steps"></div>
+      </div>
+
+      <div class="card">
+        <h2>Get the email</h2>
+        <div class="actions">
+          <button class="btn btn-primary" id="copyBtn">Copy email</button>
+          <button class="btn btn-ghost" id="rawBtn">Show raw HTML</button>
+        </div>
+        <p class="msg" id="msg"></p>
+        <p class="muted">After copying, paste into a Gmail compose window. If pasting ever loses the styling, use “Show raw HTML”, copy that, and in Gmail use a paste-as-HTML option, or send it through your email tool.</p>
+        <textarea id="raw" readonly></textarea>
+      </div>
+    </div>
+
+    <div class="preview-col">
+      <h2>Live preview</h2>
+      <iframe id="preview" title="Email preview"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS = [
+  {
+    title: "Ongoing Innovation Proposal",
+    label: "Ongoing Innovation Proposal",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Complete the proposal provided by Therese.</p>
+           <p style="margin:0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload:</strong> your completed proposal.</p>`
+  },
+  {
+    title: "Business Mentor &amp; Networks",
+    label: "Business Mentor &amp; Networks",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Secure a mentor <strong>outside The Generator</strong> who has run a small business (ideally in your industry), has multi-industry experience, or is MSD-approved.</p>
+           <p style="margin:0 0 6px 0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload:</strong> written confirmation (email or letter on letterhead).</p>
+           <p style="margin:0 0 10px 0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload:</strong> evidence you're connected to reputable business networks.</p>
+           <p style="margin:0; font-size:14px; line-height:1.5; color:#6f6469;">Contact the National Team if you need support.</p>`
+  },
+  {
+    title: "The Pitch (Practice Requirement)",
+    label: "Attend 2 pitch practices + prepare your pitch",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Attend <strong>at least 2 pitch practice sessions</strong> before <strong>Thursday 16 July</strong>. Use them to test your setup and get feedback.</p>
+           <p style="margin:0 0 6px 0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Prepare:</strong> a 3-minute maximum pitch.</p>
+           <p style="margin:0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Prepare:</strong> one slide only.</p>`
+  },
+  {
+    title: "Pay It Forward",
+    label: "Pay It Forward (evidence of helping others)",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Show how you've supported other Generites, free of charge — for example a workshop, podcast or 1:1 support, mentoring another Generite, or sharing tips on the Generites Facebook page.</p>
+           <p style="margin:0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload:</strong> evidence of your support.</p>`
+  },
+  {
+    title: "Financial Planning",
+    label: "Financial Planning with Vicky Mee",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Complete your financial planning with <strong>Vicky Mee</strong>.</p>
+           <p style="margin:0 0 8px 0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload all four:</strong></p>
+           <p style="margin:0 0 5px 0; font-size:14px; line-height:1.4;">— Profit &amp; Loss statement</p>
+           <p style="margin:0 0 5px 0; font-size:14px; line-height:1.4;">— Financial projections <em>without</em> ongoing funding</p>
+           <p style="margin:0 0 5px 0; font-size:14px; line-height:1.4;">— Financial projections <em>with</em> ongoing funding</p>
+           <p style="margin:0; font-size:14px; line-height:1.4;">— Vicky's notes</p>`
+  },
+  {
+    title: "Funding Request",
+    label: "Funding Request (quotes for your budget)",
+    body: `<p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;">Gather quotes that line up with your agreed budget.</p>
+           <p style="margin:0; font-size:14px; line-height:1.5; color:#8a3b1e;"><strong>&#10003; Upload:</strong> your quotes under <strong>Funding Request</strong>.</p>`
+  }
+];
+
+const state = STEPS.map(() => false); // false = to do, true = done
+let name = "";
+
+function glanceRow(i){
+  const n = i + 1;
+  if(state[i]){
+    return `<tr>
+      <td width="30" valign="top" style="padding:0 0 10px 0; font-size:15px; line-height:1.35; color:#5f8a3a; font-weight:800;">&#10003;</td>
+      <td valign="top" style="padding:0 0 10px 0; font-size:15px; line-height:1.35; color:#9a8f88; text-decoration:line-through;">${STEPS[i].label}</td>
+    </tr>`;
+  }
+  return `<tr>
+    <td width="30" valign="top" style="padding:0 0 10px 0; font-size:15px; line-height:1.35; color:#c71746; font-weight:800;">${n}.</td>
+    <td valign="top" style="padding:0 0 10px 0; font-size:15px; line-height:1.35;">${STEPS[i].label}</td>
+  </tr>`;
+}
+
+function detailCard(i){
+  const n = i + 1;
+  const last = i === STEPS.length - 1;
+  const pad = last ? "14px 32px 4px 32px" : "14px 32px 0 32px";
+  if(state[i]){
+    return `<tr>
+      <td class="mobile-pad" style="padding:${pad};">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f1ee; border:1px solid #e7ded9; border-radius:8px;">
+          <tr>
+            <td class="num-badge" width="58" valign="top" style="padding:18px 0 18px 18px;">
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" valign="middle" style="width:40px; height:40px; background:#bcaea6; border-radius:20px; color:#ffffff; font-size:20px; font-weight:800;">&#10003;</td></tr></table>
+            </td>
+            <td valign="top" style="padding:18px 20px 18px 14px;">
+              <h3 style="margin:0 0 4px 0; font-size:19px; line-height:1.25; color:#9a8f88; text-decoration:line-through;">${STEPS[i].title}</h3>
+              <p style="margin:0; font-size:14px; line-height:1.5; color:#5f8a3a; font-weight:700;">Done &mdash; nothing more needed here.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>`;
+  }
+  return `<tr>
+    <td class="mobile-pad" style="padding:${pad};">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #eee0dc; border-radius:8px;">
+        <tr>
+          <td class="num-badge" width="58" valign="top" style="padding:18px 0 18px 18px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" valign="middle" style="width:40px; height:40px; background:#f7941d; border-radius:20px; color:#ffffff; font-size:18px; font-weight:800;">${n}</td></tr></table>
+          </td>
+          <td valign="top" style="padding:18px 20px 18px 14px;">
+            <h3 style="margin:0 0 6px 0; font-size:19px; line-height:1.25; color:#c71746;">${STEPS[i].title}</h3>
+            ${STEPS[i].body}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>`;
+}
+
+function buildEmail(){
+  const remaining = state.filter(s => !s).length;
+  const greeting = name.trim() ? `Kia ora ${name.trim()},` : "Kia ora,";
+  let statusLine;
+  if(remaining === 0){
+    statusLine = `<strong>All 6 steps are complete — ka pai!</strong> Nothing further is needed from you for Ongoing Funding.`;
+  } else if(remaining === 6){
+    statusLine = `There are <strong>6 things to complete and upload</strong> to your dashboard:`;
+  } else {
+    statusLine = `You have <strong>${remaining} of 6 steps</strong> left to complete and upload. Completed steps are ticked off below:`;
+  }
+
+  const glance = STEPS.map((_, i) => glanceRow(i)).join("");
+  const details = STEPS.map((_, i) => detailCard(i)).join("");
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>Ongoing Funding Success Steps</title>
+    <style>
+      @media only screen and (max-width: 640px) {
+        .email-shell { width: 100% !important; }
+        .mobile-pad { padding-left: 18px !important; padding-right: 18px !important; }
+        .stack { display: block !important; width: 100% !important; }
+        .date-label { width: auto !important; }
+        .num-badge { width: 40px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin:0; padding:0; background:#f7f2ef; font-family:Arial, Helvetica, sans-serif; color:#302c2f;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f2ef;">
+      <tr>
+        <td align="center" style="padding:28px 12px;">
+          <table role="presentation" class="email-shell" width="640" cellspacing="0" cellpadding="0" border="0" style="width:640px; max-width:640px; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #eadfda;">
+
+            <tr>
+              <td class="mobile-pad" style="background:#c71746; padding:34px 32px 30px 32px;">
+                <h1 style="margin:0; font-size:32px; line-height:1.12; color:#ffffff; font-weight:800;">Your Ongoing Funding Success Steps</h1>
+                <p style="margin:14px 0 0 0; font-size:17px; line-height:1.55; color:#ffffff;">${greeting} warm Pacific greetings. This is your personal checklist to receive Ongoing Funding and be eligible for the VISA Excellence Awards. Work through it top to bottom.</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:26px 32px 6px 32px;">
+                <p style="margin:0 0 6px 0; font-size:13px; line-height:1; color:#f7941d; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Read this first</p>
+                <h2 style="margin:0 0 14px 0; font-size:23px; line-height:1.2; color:#c71746; font-weight:800;">Start Here</h2>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff7ec; border:1px solid #ffd39a; border-radius:8px;">
+                  <tr>
+                    <td style="padding:18px 22px;">
+                      <p style="margin:0 0 12px 0; font-size:15px; line-height:1.55; color:#6b4a16;"><strong>First:</strong> complete and upload the six Ongoing Funding Success Steps requirements below.</p>
+                      <p style="margin:0 0 12px 0; font-size:15px; line-height:1.55; color:#6b4a16;">Your ongoing innovation business proposal, formatted by Donna Wellington.</p>
+                      <p style="margin:0 0 12px 0; font-size:15px; line-height:1.55; color:#6b4a16;">Your financial reports, including Profit &amp; Loss, projections without funding, and projections with funding and Vicky&rsquo;s notes.</p>
+                      <p style="margin:0 0 14px 0; font-size:15px; line-height:1.55; color:#6b4a16;">To be eligible for VISA Excellence Awards: complete all ongoing success steps and funding request and attend the rehearsal and deliver your pitch to the judging panel.</p>
+                      <p style="margin:0 0 14px 0; font-size:15px; line-height:1.5; color:#6b4a16;">${statusLine}</p>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">${glance}</table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:18px 32px 6px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#c71746; border-radius:8px;">
+                  <tr>
+                    <td style="padding:16px 22px;">
+                      <p style="margin:0 0 4px 0; font-size:12px; line-height:1; color:#ffd8e0; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Don't miss these dates</p>
+                      <p style="margin:0; font-size:16px; line-height:1.5; color:#ffffff;"><strong>Pitch practices:</strong> finish 2 before <strong>Thursday 16 July</strong> &nbsp;&bull;&nbsp; <strong>Dress rehearsal:</strong> Thu 16 July &nbsp;&bull;&nbsp; <strong>Final pitch:</strong> Fri 17 July</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:26px 32px 4px 32px;">
+                <h2 style="margin:0 0 4px 0; font-size:24px; line-height:1.2; color:#c71746; font-weight:800;">The 6 steps, in detail</h2>
+                <p style="margin:0 0 6px 0; font-size:15px; line-height:1.55; color:#6f6469;">Each step shows exactly what to do and what to upload.</p>
+              </td>
+            </tr>
+
+            ${details}
+
+            <tr>
+              <td class="mobile-pad" style="padding:20px 32px 8px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff7ec; border-left:4px solid #c71746; border-radius:6px;">
+                  <tr>
+                    <td style="padding:16px 20px;">
+                      <p style="margin:0 0 4px 0; font-size:13px; line-height:1; color:#c71746; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Important</p>
+                      <p style="margin:0; font-size:15px; line-height:1.55; color:#302c2f;">Only participants who complete <strong>all 6 steps</strong> to a satisfactory standard will progress to Ongoing Funding and be invited to a Funding Zoom.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:26px 32px 6px 32px;">
+                <h2 style="margin:0 0 10px 0; font-size:24px; line-height:1.2; color:#c71746; font-weight:800;">VISA Excellence Awards</h2>
+                <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6;">Complete and get all 6 steps approved, and you're automatically in the running for the awards — a total pool of <strong>$17,000</strong>. Here's the extra part you'll do for the awards:</p>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff7ec; border:1px solid #ffd39a; border-radius:8px;">
+                  <tr>
+                    <td style="padding:18px 22px;">
+                      <p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;"><strong>1. Dress Rehearsal Pitch</strong><br>Thursday 16 July, 12:00&ndash;3:30pm</p>
+                      <p style="margin:0 0 10px 0; font-size:15px; line-height:1.5;"><strong>2. Final Pitch to the Judging Panel</strong><br>Friday 17 July, 12:00&ndash;3:30pm</p>
+                      <p style="margin:0; font-size:15px; line-height:1.5;"><strong>Format:</strong> 3-minute pitch + 2-minute Q&amp;A</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:20px 32px 6px 32px;">
+                <h3 style="margin:0 0 10px 0; font-size:18px; line-height:1.25; color:#c71746;">What the judges assess</h3>
+                <p style="margin:0 0 10px 0; font-size:15px; line-height:1.55;">They'll look at your <strong>business proposal</strong> (formatted by Donna Wellington) and your <strong>financial reports</strong> (P&amp;L, plus projections with and without funding), judged on:</p>
+                <p style="margin:0 0 5px 0; font-size:14px; line-height:1.45;">— Strengthening mana and resilience</p>
+                <p style="margin:0 0 5px 0; font-size:14px; line-height:1.45;">— Commercial viability and growth</p>
+                <p style="margin:0 0 5px 0; font-size:14px; line-height:1.45;">— Alignment with Emerge Aotearoa values and pou</p>
+                <p style="margin:0; font-size:14px; line-height:1.45;">— Respect for confidentiality and intellectual property</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:24px 32px 6px 32px;">
+                <h2 style="margin:0 0 12px 0; font-size:24px; line-height:1.2; color:#c71746; font-weight:800;">Key dates</h2>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:separate; border-spacing:0; border:1px solid #eee0dc; border-radius:8px; overflow:hidden;">
+                  <tr><td class="date-label" width="190" style="padding:14px 16px; background:#fff7ec; border-bottom:1px solid #eee0dc; color:#c71746; font-size:15px; line-height:1.35; font-weight:800;">Tuesday 16 June</td><td style="padding:14px 16px; border-bottom:1px solid #eee0dc; font-size:15px; line-height:1.35;">Panel access to materials</td></tr>
+                  <tr><td class="date-label" width="190" style="padding:14px 16px; background:#fff7ec; border-bottom:1px solid #eee0dc; color:#c71746; font-size:15px; line-height:1.35; font-weight:800;">Thursday 16 July</td><td style="padding:14px 16px; border-bottom:1px solid #eee0dc; font-size:15px; line-height:1.35;">Dress rehearsal, 12:00&ndash;3:30pm</td></tr>
+                  <tr><td class="date-label" width="190" style="padding:14px 16px; background:#fff7ec; border-bottom:1px solid #eee0dc; color:#c71746; font-size:15px; line-height:1.35; font-weight:800;">Friday 17 July</td><td style="padding:14px 16px; border-bottom:1px solid #eee0dc; font-size:15px; line-height:1.35;">Final pitches, 12:00&ndash;3:30pm</td></tr>
+                  <tr><td class="date-label" width="190" style="padding:14px 16px; background:#fff7ec; border-bottom:1px solid #eee0dc; color:#c71746; font-size:15px; line-height:1.35; font-weight:800;">End of July</td><td style="padding:14px 16px; border-bottom:1px solid #eee0dc; font-size:15px; line-height:1.35;">Panel decisions</td></tr>
+                  <tr><td class="date-label" width="190" style="padding:14px 16px; background:#fff7ec; color:#c71746; font-size:15px; line-height:1.35; font-weight:800;">Saturday 19 September</td><td style="padding:14px 16px; font-size:15px; line-height:1.35;">Awards event, 4:00&ndash;8:00pm, M&#257;ngere Arts Centre</td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="mobile-pad" style="padding:24px 32px 32px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7941d; border-radius:8px;">
+                  <tr>
+                    <td style="padding:20px 22px;">
+                      <h2 style="margin:0 0 10px 0; font-size:22px; line-height:1.25; color:#ffffff;">In short</h2>
+                      <p style="margin:0 0 8px 0; font-size:16px; line-height:1.55; color:#ffffff;"><strong>For Ongoing Funding:</strong> complete and upload the six Ongoing Funding Success Steps requirements below.</p>
+                      <p style="margin:0; font-size:16px; line-height:1.55; color:#ffffff;"><strong>For the VISA Excellence Awards:</strong> complete all ongoing success steps and funding request and attend the rehearsal and deliver your pitch to the judging panel.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="background:#c71746; padding:24px 32px;">
+                <p style="margin:0 0 8px 0; font-size:15px; line-height:1.55; color:#ffffff;">Please reach out if you need support.</p>
+                <p style="margin:0; font-size:14px; line-height:1.55; color:#ffffff;"><strong>Email:</strong> <a href="mailto:therese.ireland@emergeaotearoa.org.nz" style="color:#ffffff; text-decoration:underline;">therese.ireland@emergeaotearoa.org.nz</a></p>
+                <p style="margin:18px 0 0 0; font-size:11px; line-height:1.45; color:#ffd8e0;">Caution: If you have received this message in error, please notify the sender immediately and delete this message along with any attachments. Please treat the contents of this message as private and confidential. Thank you.</p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+}
+
+// ---- UI wiring ----
+const stepsEl = document.getElementById('steps');
+STEPS.forEach((s, i) => {
+  const row = document.createElement('div');
+  row.className = 'step-row';
+  row.innerHTML = `<span class="n">${i+1}</span><span class="t">${s.title}</span><button class="toggle todo" data-i="${i}">&#9711; To do</button>`;
+  stepsEl.appendChild(row);
+});
+
+function refreshControls(){
+  document.querySelectorAll('.toggle').forEach(btn => {
+    const i = +btn.dataset.i;
+    const row = btn.closest('.step-row');
+    if(state[i]){
+      btn.className = 'toggle done'; btn.innerHTML = '&#10003; Done';
+      row.classList.add('is-done');
+    } else {
+      btn.className = 'toggle todo'; btn.innerHTML = '&#9711; To do';
+      row.classList.remove('is-done');
+    }
+  });
+}
+
+function render(){
+  refreshControls();
+  const html = buildEmail();
+  document.getElementById('preview').srcdoc = html;
+  document.getElementById('raw').value = html;
+}
+
+stepsEl.addEventListener('click', e => {
+  const btn = e.target.closest('.toggle');
+  if(!btn) return;
+  const i = +btn.dataset.i;
+  state[i] = !state[i];
+  render();
+});
+
+document.getElementById('name').addEventListener('input', e => {
+  name = e.target.value;
+  render();
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  const html = buildEmail();
+  const msg = document.getElementById('msg');
+  try{
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html': new Blob([html], {type:'text/html'}),
+      'text/plain': new Blob([html], {type:'text/plain'})
+    })]);
+    msg.textContent = '✓ Copied! Now paste into a Gmail compose window.';
+  }catch(err){
+    const ta = document.getElementById('raw');
+    ta.style.display = 'block'; ta.select();
+    try{ document.execCommand('copy'); msg.textContent = '✓ Copied raw HTML (shown below).'; }
+    catch(e2){ msg.textContent = 'Could not auto-copy — use “Show raw HTML” and copy manually.'; }
+  }
+  setTimeout(() => { msg.textContent = ''; }, 6000);
+});
+
+document.getElementById('rawBtn').addEventListener('click', () => {
+  const ta = document.getElementById('raw');
+  ta.style.display = ta.style.display === 'block' ? 'none' : 'block';
+});
+
+render();
+</script>
+</body>
+</html>
